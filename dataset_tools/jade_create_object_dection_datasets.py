@@ -12,6 +12,7 @@ from jade import ProgressBar,GetLastDir,CreateSavePath
 import shutil
 import random
 import xml.etree.ElementTree as ET
+from dataset_tools.jade_voc_datasets import GetXmlClassesNames
 
 def CreateSavePath(save_path):
     if os.path.exists(save_path):
@@ -143,9 +144,13 @@ def CreateVOCDataset(dir, datasetname,save_path=None,rate=0.95):
                 if len(f2.read()) == 0:
                     pass
                 else:
-                    shutil.copy(os.path.join(dir, JPEGImages, train_image_file), save_image_path)
-                    shutil.copy(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"), save_xml_path)
-                    f.write(filename + "\n")
+                    class_name_list = GetXmlClassesNames(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"))
+                    if len(class_name_list) > 0:
+                        shutil.copy(os.path.join(dir, JPEGImages, train_image_file), save_image_path)
+                        shutil.copy(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"), save_xml_path)
+                        f.write(filename + "\n")
+                    else:
+                        print(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"))
             # f.write(image_file + " " + xml_file + "\n")
 
     for test_image_file in test_image_files:
@@ -160,10 +165,14 @@ def CreateVOCDataset(dir, datasetname,save_path=None,rate=0.95):
                 if len(f2.read()) == 0:
                     pass
                 else:
-                    shutil.copy(os.path.join(dir, JPEGImages, train_image_file), save_image_path)
-                    shutil.copy(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"), save_xml_path)
-                    f.write(filename + "\n")
-            # f.write(image_file + " " + xml_file + "\n")
+                    class_name_list = GetXmlClassesNames(
+                        os.path.join(dir, DIRECTORY_ANNOTATIONS, test_image_file[:-4] + ".xml"))
+                    if len(class_name_list) > 0:
+                        shutil.copy(os.path.join(dir, JPEGImages, test_image_file), save_image_path)
+                        shutil.copy(os.path.join(dir, DIRECTORY_ANNOTATIONS, test_image_file[:-4] + ".xml"), save_xml_path)
+                        f.write(filename + "\n")
+                    else:
+                        print(os.path.join(dir, DIRECTORY_ANNOTATIONS, test_image_file[:-4] + ".xml"))
 
     for train_image_file in train_image_files:
         with open(os.path.join(Main_path, "train.txt"), "a") as f:
@@ -175,7 +184,15 @@ def CreateVOCDataset(dir, datasetname,save_path=None,rate=0.95):
                 if len(f2.read()) == 0:
                     pass
                 else:
-                    f.write(image_file + " " + xml_file + "\n")
+                    class_name_list = GetXmlClassesNames(
+                        os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"))
+                    if len(class_name_list) > 0:
+                        shutil.copy(os.path.join(dir, JPEGImages, train_image_file), save_image_path)
+                        shutil.copy(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"), save_xml_path)
+                        f.write(image_file + " " + xml_file + "\n")
+                    else:
+                        print(os.path.join(dir, DIRECTORY_ANNOTATIONS, train_image_file[:-4] + ".xml"))
+
             # f.write(filename + "\n")
 
 
@@ -189,7 +206,16 @@ def CreateVOCDataset(dir, datasetname,save_path=None,rate=0.95):
                 if len(f2.read()) == 0:
                     pass
                 else:
-                    f.write(image_file + " " + xml_file + "\n")
+                    class_name_list = GetXmlClassesNames(
+                        os.path.join(dir, DIRECTORY_ANNOTATIONS, test_image_file[:-4] + ".xml"))
+                    if len(class_name_list) > 0:
+                        shutil.copy(os.path.join(dir, JPEGImages, test_image_file), save_image_path)
+                        shutil.copy(os.path.join(dir, DIRECTORY_ANNOTATIONS, test_image_file[:-4] + ".xml"),
+                                    save_xml_path)
+                        f.write(image_file + " " + xml_file + "\n")
+                    else:
+                        print(os.path.join(dir, DIRECTORY_ANNOTATIONS, test_image_file[:-4] + ".xml"))
+
             # f.write(filename + "\n")
 
 def CreateLabelList(dir):

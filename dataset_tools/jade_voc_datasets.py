@@ -11,7 +11,7 @@ from opencv_tools import *
 from xml.dom import minidom
 from dataset_tools import *
 from opencv_tools import *
-
+import xml.etree.ElementTree as ET
 
 def GetXmlClassesNames(xml_path):
     classnames = []
