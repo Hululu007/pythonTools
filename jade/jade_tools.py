@@ -168,6 +168,11 @@ def timestr_to_time(time_str):
 
     return time.mktime(time.strptime(time_str,"%Y-%m-%d %H:%M:%S"))
 
+def timerfc_to_str(time_rfc):
+    """
+    RFC 2832格式转时间字符串格式
+    """
+    return timeint_to_timestr(time.mktime(time.strptime(time_rfc,'%a, %d %b %Y %H:%M:%S %z')))
 
 
 def timefloat_to_timestr(floatstring):
