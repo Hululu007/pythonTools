@@ -37,7 +37,7 @@ class PyLdk(object):
         feature_id = self.adapter.get_info()
         return feature_id
 
-    def login(self,feature_id=None):
+    def login(self,feature_id=None,is_mutiple_feature_id=False):
         ## 首先判断加密狗是否存在
         login_status = False
         if feature_id is None:
@@ -57,7 +57,8 @@ class PyLdk(object):
             else:
                 self.adapter.log("加密狗初始化失败",haspStruct.status)
         else:
-            self.adapter.show_staus("加密狗初始化失败", haspStruct.status,feature_id)
+            if is_mutiple_feature_id is False:
+                self.adapter.show_staus("加密狗初始化失败", haspStruct.status,feature_id)
         return haspStruct,feature_id,login_status
 
 
