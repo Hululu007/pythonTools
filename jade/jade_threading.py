@@ -27,10 +27,14 @@ class MonitorLDKThread(Thread):
     def run(self):
         if self.feature_id_list:
             for feature_id in self.feature_id_list:
-                haspStruct, feature_id, login_status = self.pyldk.login(feature_id)
+                haspStruct, feature_id, login_status = self.pyldk.login(feature_id,is_mutiple_feature_id=True)
                 if haspStruct.status == 0:
                     self.handlequeue.put(haspStruct.handle)
                     break
+            if haspStruct.status != 0:
+                haspStruct, feature_id, login_status = self.pyldk.login()
+                self.pyldk.adapter.logout(haspStruct.handle)
+                self.JadeLog.ERROR("加密狗初始化失败,没有找到该授权,请检查授权ID是否正确,授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(','.join(str(i) for i in self.feature_id_list),feature_id))
         else:
             haspStruct, feature_id, login_status = self.pyldk.login()
             self.pyldk.adapter.logout(haspStruct.handle)
