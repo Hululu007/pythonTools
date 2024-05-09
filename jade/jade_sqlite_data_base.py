@@ -77,11 +77,19 @@ class JadeSqliteDataBase(object):
                 if type(data[data_key]) == str:
                     if len(data[data_key]) > 0:
                         sql_str = sql_str + data_key + ","
+                elif type(data[data_key]) == int:
+                    sql_str = sql_str + data_key + ","
+                elif type(data[data_key]) == bool:
+                    sql_str = sql_str + data_key + ","
             sql_str = sql_str[:-1] + ") VALUES ("
             for data_key in data.keys():
                 if type(data[data_key]) == str:
                     if len(data[data_key]) > 0:
                         sql_str = sql_str + "'{}'".format(data[data_key]) + ","
+                elif type(data[data_key]) == int:
+                    sql_str = sql_str + "{}".format(data[data_key]) + ","
+                elif type(data[data_key]) == bool:
+                    sql_str = sql_str + "{}".format(int(data[data_key])) + ","
             sql_str = sql_str[:-1] + ")"
             self.lock.acquire()
             self.cursor.execute(sql_str)
