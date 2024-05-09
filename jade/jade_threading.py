@@ -22,6 +22,10 @@ class MonitorLDKThread(Thread):
         super(MonitorLDKThread, self).__init__()
         self.start()
 
+    def exit(self):
+        self.JadeLog.ERROR("加密狗异常,程序退出")
+        Exit(-800)
+
     def logout(self):
         handle = self.handlequeue.get()
         self.pyldk.adapter.logout(handle)
@@ -36,13 +40,13 @@ class MonitorLDKThread(Thread):
                 haspStruct, feature_id, login_status = self.pyldk.login()
                 self.pyldk.adapter.logout(haspStruct.handle)
                 self.JadeLog.ERROR("加密狗初始化失败,请检查授权ID是否正确,支持的授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(','.join(str(i) for i in self.feature_id_list),feature_id))
+                self.exit()
         elif self.max_featuer_id:
             haspStruct, feature_id, login_status = self.pyldk.login()
             self.pyldk.adapter.logout(haspStruct.handle)
             if feature_id > self.max_featuer_id:
                 self.JadeLog.ERROR("加密狗初始化失败,请检查授权ID是否正确,最大支持授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(self.max_featuer_id,feature_id))
-                self.JadeLog.ERROR("加密狗异常,程序退出")
-                Exit(-800)
+                self.exit()
         else:
             haspStruct, feature_id, login_status = self.pyldk.login()
             self.pyldk.adapter.logout(haspStruct.handle)
@@ -62,5 +66,4 @@ class MonitorLDKThread(Thread):
             else:
                 self.JadeLog.DEBUG("加密狗监听正常")
             time.sleep(self.time)
-        self.JadeLog.ERROR("加密狗异常,程序退出")
-        Exit(-800)
+        self.exit()
