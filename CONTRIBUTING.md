@@ -1,13 +1,15 @@
 ### 更新日志
 
+#### JadeV2.2.3 - 2024-05-09
+* packing模块支持src目录下的packages
+---
+
+<details onclose>
+<summary>查看更多更新日志</summary>
 
 #### JadeV2.2.2 - 2024-05-09
 * 数据库操作支持int和Bool类型
 ---
-
-
-<details onclose>
-<summary>查看更多更新日志</summary>
 
 #### JadeV2.2.1 - 2024-05-09
 * 解决传入多个feature id,加密狗不满足条件,程序不退出的bug

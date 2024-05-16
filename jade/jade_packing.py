@@ -14,7 +14,7 @@ import shutil
 import platform
 import subprocess
 import uuid
-
+import re
 
 def str_to_bool(str):
     if str == "False":
@@ -70,23 +70,53 @@ def get_import_content(f1, src_import, content, import_list):
     return edit
 
 
-def copyPy(args):
-    new_src_path = CreateSavePath("new_src")
-    try:
-        if str_to_bool(args.is_qt) is False:
-            src_path_list = ["src"]
-            src_import_list = ["src."]
-        else:
-            src_path_list = ["src", "view", "view/customView", "controller"]
-            src_import_list = ["src.", "view.", "view.customView.", "controller."]
-    except:
-        src_path_list = ["src"]
-        src_import_list = ["src."]
-    import_list = []
-    for src_path in src_path_list:
-        for file_name in os.listdir(src_path):
-            if "py" in file_name and "init" not in file_name and os.path.isfile(os.path.join(src_path, file_name)):
-                if file_name != "samplesMain.py":
+def writePyContent(args,src_path,new_src_path,src_path_list,src_import_list,import_list):
+    for file_name in os.listdir(src_path):
+        if os.path.isfile(os.path.join(src_path, file_name)):
+            file_name_suffix = re.search(r"\.(\w+)$", file_name).group(1)
+            if file_name_suffix == "py":
+                if "__init__.py" == file_name :
+                    if src_path not in src_path_list :
+                        with open(os.path.join(new_src_path, GetLastDir(src_path)) + ".py", "wb") as f1:
+                            with open(os.path.join(src_path, file_name), "rb") as f:
+                                try:
+                                    content_list = str(f.read(), encoding="utf-8").split("\n")
+                                except:
+                                    pass
+                                for content in content_list:
+                                    if "import" in content or ("from" in content and "import" in content):
+                                        edit = False
+                                        for src_import in src_import_list:
+                                            if "from" in content:
+                                                prefix_list = content.split("from")[1].split("import")[0].split(".")[
+                                                              :-1]
+                                                prefix = ""
+                                                if len(prefix_list) > 0:
+                                                    for text in prefix_list:
+                                                        prefix = prefix + text + "."
+                                                if src_import in prefix.strip():
+                                                    f1.write(
+                                                        (content.replace(prefix.strip(), "") + '\n').encode("utf-8"))
+                                                    if content not in import_list and "#" not in content and \
+                                                            content[
+                                                                0] != " ":
+                                                        import_list.append(content)
+                                                    edit = True
+                                                    break
+                                        if edit is False:
+                                            f1.write((content + '\n').encode("utf-8"))
+                                            if content not in import_list and "#" not in content and content[0] != " ":
+                                                import_list.append(content)
+                                    elif "JadeLog = JadeLogging" in content:
+                                        if str_to_bool(args.use_jade_log):
+                                            update_log = "\n    JadeLog.INFO('{}-更新时间为:{}',True)\r".format(
+                                                args.name + "V" + args.app_version, GetTimeStamp(), True)
+                                            f1.write((content + update_log).encode("utf-8"))
+                                        else:
+                                            f1.write((content).encode("utf-8"))
+                                    else:
+                                        f1.write((content + "\n").encode("utf-8"))
+                elif file_name != "samplesMain.py":
                     with open(os.path.join(new_src_path, file_name), "wb") as f1:
                         with open(os.path.join(src_path, file_name), "rb") as f:
                             try:
@@ -165,6 +195,25 @@ def copyPy(args):
                                         f1.write((content + "\n").encode("utf-8"))
                                 else:
                                     f1.write((content + '\n').encode("utf-8"))
+        else:
+            if os.path.isdir( os.path.join(src_path, file_name)) and "pycache" not in file_name:
+                writePyContent(args, os.path.join(src_path, file_name), new_src_path,src_path_list,src_import_list, import_list)
+
+def copyPy(args):
+    new_src_path = CreateSavePath("new_src")
+    try:
+        if str_to_bool(args.is_qt) is False:
+            src_path_list = ["src"]
+            src_import_list = ["src."]
+        else:
+            src_path_list = ["src", "view", "view/customView", "controller"]
+            src_import_list = ["src.", "view.", "view.customView.", "controller."]
+    except:
+        src_path_list = ["src"]
+        src_import_list = ["src."]
+    import_list = []
+    for src_path in src_path_list:
+        writePyContent(args,src_path,new_src_path,src_path_list,src_import_list,import_list)
     if args.app_version:
         with open("new_src/samplesVersion.py","wb") as f:
             f.write('#!/usr/bin/env python\n'
