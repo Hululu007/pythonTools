@@ -97,16 +97,10 @@ def writePyContent(args,src_path,new_src_path,src_path_list,src_import_list,impo
                                                 if src_import in prefix.strip():
                                                     f1.write(
                                                         (content.replace(prefix.strip(), "") + '\n').encode("utf-8"))
-                                                    if content not in import_list and "#" not in content and \
-                                                            content[
-                                                                0] != " ":
-                                                        import_list.append(content)
                                                     edit = True
                                                     break
                                         if edit is False:
                                             f1.write((content + '\n').encode("utf-8"))
-                                            if content not in import_list and "#" not in content and content[0] != " ":
-                                                import_list.append(content)
                                     elif "JadeLog = JadeLogging" in content:
                                         if str_to_bool(args.use_jade_log):
                                             update_log = "\n    JadeLog.INFO('{}-更新时间为:{}',True)\r".format(

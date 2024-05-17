@@ -1,11 +1,15 @@
 ### 更新日志
 
-#### JadeV2.2.3 - 2024-05-09
-* packing模块支持src目录下的packages
+#### JadeV2.2.4 - 2024-05-17
+* 解决打包出现的日志重复的bug
 ---
 
 <details onclose>
 <summary>查看更多更新日志</summary>
+
+#### JadeV2.2.3 - 2024-05-09
+* packing模块支持src目录下的packages
+---
 
 #### JadeV2.2.2 - 2024-05-09
 * 数据库操作支持int和Bool类型
