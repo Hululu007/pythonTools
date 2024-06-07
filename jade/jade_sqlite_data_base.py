@@ -20,116 +20,116 @@ class JadeSqliteDataBase(object):
         # 使用cursor()方法获取操作游标,连接数据库
         self.db = sqlite3.connect(self._db_name, check_same_thread=False)
         self.cursor = self.db.cursor()
-        if self.JadeLog:
-            self.JadeLog.DEBUG(
-                "#" * 30 + "{}数据库连接成功".format(talbe_name) + "#" * 30
-            )
-
+        self.log("#" * 30 + "{}数据库连接成功".format(talbe_name) + "#" * 30,LEVEL="DEBUG")
         super(JadeSqliteDataBase, self).__init__()
 
-        # 重新连接
+    def create_table(self, sql_str):
+        try:
+            if type(sql_str) == str:
+                self.cursor.execute(sql_str)
+            elif type(sql_str) == dict:
+                self.create_table_by_dic(sql_str)
+        except:
+            pass
 
-
-    def create_table(self, table_config):
+    def create_table_by_dic(self, table_config):
         """:parameter
         table_name:表名
         table_config:dict
         """
-        sql_str = (
-            "CREATE TABLE {} (id INTEGER PRIMARY KEY AUTOINCREMENT ,".format(
-                self.table_name
-            )
-        )
         try:
-
+            key_str_list = []
             for key in table_config:
-                if key == "rec_date":
-                    continue
-                if "path" in key:
-                    size_str = " varchar(255),"
-                elif key == "detect_type":
-                    size_str = " varchar(255),"
-                else:
-                    size_str = " varchar(20),"
-                sql_str = sql_str + key + size_str
+                key_str_list.append(key + " " + table_config[key])
             sql_str = (
-                    sql_str
-                    + "rec_date TIMESTAMP default (datetime('now', 'localtime')))"
+                "CREATE TABLE {} ({})".format(
+                    self.table_name,",".join(key_str_list)
+                )
             )
             self.cursor.execute(sql_str)
         except Exception as e:
             if "exists" in str(e):
                 pass
             else:
-                if self.JadeLog:
-                    self.JadeLog.ERROR("创建表失败,失败原因为{}".format(e))
+                self.log("创建表失败,失败原因为{}".format(e))
 
+    def log(self,str,LEVEL="ERROR"):
+        if self.JadeLog:
+            if LEVEL == "DEBUG":
+                self.JadeLog.DEBUG(str)
+            elif LEVEL == "INFO":
+                self.JadeLog.INFO(str)
+            elif LEVEL == "WARNING":
+                self.JadeLog.WARNING(str)
+            elif LEVEL == "ERROR":
+                self.JadeLog.ERROR(str)
+        else:
+            print(str)
+
+    def base_query(self,sql):
+        try:
+            try:
+                self.lock.acquire(True)
+                self.cursor.execute(sql)
+                return self.cursor.fetchall()
+            finally:
+                self.lock.release()
+        except Exception as e:
+            self.log("查询数据库失败,失败原因为:{},sql语句为:{}".format(e,sql),LEVEL="ERROR")
+
+    def base_update(self,sql):
+        try:
+            try:
+                self.lock.acquire(True)
+                self.cursor.execute(sql)
+                self.db.commit()
+            finally:
+                self.lock.release()
+        except Exception as e:
+            self.log("更新数据库失败,失败原因为:{},sql语句为:{}".format(e,sql),LEVEL="ERROR")
+
+    def base_delete(self,sql):
+        try:
+            try:
+                self.lock.acquire(True)
+                self.cursor.execute(sql)
+                self.db.commit()
+                self.cursor.execute("VACUUM")
+                self.db.commit()
+            finally:
+                self.lock.release()
+        except Exception as e:
+            self.log("删除表失败,失败原因为:{},sql语句为:{}".format(e, sql),LEVEL="ERROR")
+
+    def judgement_value_type(self,value):
+        if type(value) == bool:
+            return int(value)
+        else:
+            return value
 
     def insert(self, data):
         """:插入一条数据
         data:插入的数据
         """
-        self.db = sqlite3.connect(self._db_name, check_same_thread=False)
-        self.cursor = self.db.cursor()
         sql_str = "INSERT OR IGNORE    INTO {} (".format(self.table_name)
-        try:
-            for data_key in data.keys():
-                if type(data[data_key]) == str:
-                    if len(data[data_key]) > 0:
-                        sql_str = sql_str + data_key + ","
-                elif type(data[data_key]) == int:
-                    sql_str = sql_str + data_key + ","
-                elif type(data[data_key]) == bool:
-                    sql_str = sql_str + data_key + ","
-            sql_str = sql_str[:-1] + ") VALUES ("
-            for data_key in data.keys():
-                if type(data[data_key]) == str:
-                    if len(data[data_key]) > 0:
-                        sql_str = sql_str + "'{}'".format(data[data_key]) + ","
-                elif type(data[data_key]) == int:
-                    sql_str = sql_str + "{}".format(data[data_key]) + ","
-                elif type(data[data_key]) == bool:
-                    sql_str = sql_str + "{}".format(int(data[data_key])) + ","
-            sql_str = sql_str[:-1] + ")"
-            self.lock.acquire()
-            self.cursor.execute(sql_str)
-            self.db.commit()
-            self.lock.release()
-        except Exception as e:
-            if  self.JadeLog:
-                self.JadeLog.ERROR("插入数据表失败,失败原因为{},sql语句为{}".format(e, sql_str))
+        for data_key in data.keys():
+            sql_str = sql_str + data_key + ","
 
+        sql_str = sql_str[:-1] + ") VALUES ("
+        for data_key in data.keys():
+            sql_str = sql_str + "'{}'".format(self.judgement_value_type(data[data_key])) + ","
+        sql_str = sql_str[:-1] + ")"
+        self.base_update(sql_str)
 
     def query(self, start_time, end_time):
         """:查询所有的数据
         return:表单
         """
-        self.db = sqlite3.connect(self._db_name, check_same_thread=False)
-        self.cursor = self.db.cursor()
-        sql_str = "SELECT * FROM {} where  rec_date >'{}' and rec_date<'{}'".format(self.table_name, start_time,
-                                                                                    end_time)
-        try:
-            self.lock.acquire()
-            self.cursor.execute(sql_str)
-            results = self.cursor.fetchall()
-            self.lock.release()
-            return results
-        except Exception as e:
-            if self.JadeLog:
-                self.JadeLog.ERROR("查询表失败,失败原因为{},sql语句为{}".format(e, sql_str))
-            pass
+        sql_str = "SELECT * FROM {} where  rec_date >'{}' and rec_date<'{}'".format(self.table_name, start_time,end_time)
+        return self.base_query(sql_str)
+
 
     def clear(self):
-        self.db = sqlite3.connect(self._db_name, check_same_thread=False)
-        self.cursor = self.db.cursor()
         sql_str = "DELETE FROM {}".format(self.table_name)
-        try:
-            self.cursor.execute(sql_str)
-            self.db.commit()
-            self.cursor.execute("VACUUM")
-            self.db.commit()
-        except Exception as e:
-            self.JadeLog.ERROR("插入数据表失败,失败原因为{},sql语句为{}".format(e, sql_str))
-
-
+        self.base_delete(sql_str)
 
