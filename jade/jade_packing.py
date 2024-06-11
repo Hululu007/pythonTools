@@ -427,7 +427,7 @@ def writeSpec(args):
                         data_str = data_str + file_path_list_str + ","
             else:
                 file_path = bin_path
-                file_path_str = ("'{}'".format(file_path))
+                file_path_str = ("r'{}'".format(file_path))
                 file_path_list_str = "({},'{}')".format(file_path_str, save_path)
                 if i == len(extra_path_list) - 1:
                     data_str = data_str + file_path_list_str + "]"
