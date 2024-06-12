@@ -9,8 +9,30 @@
 from threading import Thread
 from jade.jade_tools import *
 from queue import Queue
+
+
+class GracefulKiller:
+    kill_now = False
+    signals = {
+        signal.SIGINT: 'SIGINT',
+        signal.SIGTERM: 'SIGTERM'
+    }
+
+    def __init__(self, func, *args):
+        self.func = func
+        self.args = args
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, signum, frame):
+        self.func(self.args[0][0], self.args[0][1], self.args[0][2])
+        time.sleep(1)
+        self.kill_now = True
+
+
 class MonitorLDKThread(Thread):
-    def __init__(self,pyldk,JadeLog,ldkqueue,time=60*60,max_session_size=1,feature_id_list=None,max_featuer_id=None):
+    def __init__(self, pyldk, JadeLog, ldkqueue, time=60 * 60, max_session_size=1, feature_id_list=None,
+                 max_featuer_id=None, exit_queue=None):
         self.pyldk = pyldk
         self.JadeLog = JadeLog
         self.ldkqueue = ldkqueue
@@ -19,39 +41,45 @@ class MonitorLDKThread(Thread):
         self.max_featuer_id = max_featuer_id
         self.max_session_size = max_session_size
         self.handlequeue = Queue(maxsize=max_session_size)
+        self.exit_queue = exit_queue
         super(MonitorLDKThread, self).__init__()
         self.start()
 
     def exit(self):
         self.JadeLog.ERROR("加密狗异常,程序退出")
-        Exit(-800)
+        Exit(-800, self.exit_queue)
 
     def logout(self):
         handle = self.handlequeue.get()
         self.pyldk.adapter.logout(handle)
+
     def run(self):
         if self.feature_id_list:
             for feature_id in self.feature_id_list:
-                haspStruct, feature_id, login_status = self.pyldk.login(feature_id,is_mutiple_feature_id=True)
+                haspStruct, feature_id, login_status = self.pyldk.login(feature_id, is_mutiple_feature_id=True)
                 if haspStruct.status == 0:
                     self.handlequeue.put(haspStruct.handle)
                     break
             if haspStruct.status != 0:
                 haspStruct, feature_id, login_status = self.pyldk.login()
                 self.pyldk.adapter.logout(haspStruct.handle)
-                self.JadeLog.ERROR("加密狗初始化失败,请检查授权ID是否正确,支持的授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(','.join(str(i) for i in self.feature_id_list),feature_id))
+                self.JadeLog.ERROR(
+                    "加密狗初始化失败,请检查授权ID是否正确,支持的授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(
+                        ','.join(str(i) for i in self.feature_id_list), feature_id))
                 self.exit()
         elif self.max_featuer_id:
             haspStruct, feature_id, login_status = self.pyldk.login()
             self.pyldk.adapter.logout(haspStruct.handle)
             if feature_id > self.max_featuer_id:
-                self.JadeLog.ERROR("加密狗初始化失败,请检查授权ID是否正确,最大支持授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(self.max_featuer_id,feature_id))
+                self.JadeLog.ERROR(
+                    "加密狗初始化失败,请检查授权ID是否正确,最大支持授权ID为:{},当前加密狗授权ID为:{},请重新授权...".format(
+                        self.max_featuer_id, feature_id))
                 self.exit()
         else:
             haspStruct, feature_id, login_status = self.pyldk.login()
             self.pyldk.adapter.logout(haspStruct.handle)
         while haspStruct.status == 0 and login_status:
-            haspStruct, feature_id,login_status = self.pyldk.login(feature_id)
+            haspStruct, feature_id, login_status = self.pyldk.login(feature_id)
             if haspStruct.status == 0 and login_status:
                 if self.handlequeue.qsize() == self.max_session_size:
                     self.logout()
@@ -67,3 +95,15 @@ class MonitorLDKThread(Thread):
                 self.JadeLog.DEBUG("加密狗监听正常")
             time.sleep(self.time)
         self.exit()
+
+
+class GetExitSignalThread(Thread):
+    def __init__(self, func, *args):
+        self.killer = GracefulKiller(func, args)
+        super(GetExitSignalThread, self).__init__()
+        self.start()
+
+    def run(self):
+        while not self.killer.kill_now:
+            time.sleep(1)
+        Exit(-1)

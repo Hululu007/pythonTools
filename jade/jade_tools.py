@@ -7,6 +7,7 @@
 # @Software : Samples
 # @Desc     :
 import os
+import queue
 import sys
 import datetime
 import time
@@ -28,10 +29,14 @@ def zh_ch(string):
     """
     return string.encode("gbk").decode('UTF-8', errors='ignore')
 
-def Exit(exit_number):
+def Exit(exit_number,exit_queue=None):
     """
     强制结束
     """
+    if exit_queue:
+        for i in range(exit_queue.qsize()):
+            process = exit_queue.get()
+            process.kill()
     time.sleep(1)
     os._exit(exit_number)
 
@@ -469,18 +474,26 @@ class GracefulKiller:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
 
     def exit_gracefully(self, signum, frame):
-        self.func(self.args[0][0],self.args[0][1])
+        self.func(self.args[0][0],self.args[0][1],self.args[0][2])
         time.sleep(1)
         self.kill_now = True
+
+
 
 def GetExitSignal(func,*args):
     killer = GracefulKiller(func,args)
     while not killer.kill_now:
         time.sleep(1)
     Exit(-1)
-def ldk_release(ldkqueue,JadeLog=None):
+def ldk_release(ldkqueue,JadeLog=None,exit_queue=None):
     if JadeLog:
         JadeLog.DEBUG("准备释放加密狗登录", True)
+    if exit_queue:
+        JadeLog.DEBUG("准备清除子进程",True)
+        if exit_queue:
+            for i in range(exit_queue.qsize()):
+                process = exit_queue.get()
+                process.kill()
     if ldkqueue.qsize() > 0:
         pyldk, handle = ldkqueue.get()
         pyldk.adapter.logout(handle)
