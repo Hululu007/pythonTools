@@ -32,7 +32,7 @@ class GracefulKiller:
 
 class MonitorLDKThread(Thread):
     def __init__(self, pyldk, JadeLog, ldkqueue, time=60 * 60, max_session_size=1, feature_id_list=None,
-                 max_featuer_id=None, exit_queue=None):
+                 max_featuer_id=None, process_id_queue=None):
         self.pyldk = pyldk
         self.JadeLog = JadeLog
         self.ldkqueue = ldkqueue
@@ -41,13 +41,13 @@ class MonitorLDKThread(Thread):
         self.max_featuer_id = max_featuer_id
         self.max_session_size = max_session_size
         self.handlequeue = Queue(maxsize=max_session_size)
-        self.exit_queue = exit_queue
+        self.process_id_queue = process_id_queue
         super(MonitorLDKThread, self).__init__()
         self.start()
 
     def exit(self):
         self.JadeLog.ERROR("加密狗异常,程序退出")
-        Exit(-800, self.exit_queue)
+        Exit(-800, self.process_id_queue)
 
     def logout(self):
         handle = self.handlequeue.get()

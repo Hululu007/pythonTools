@@ -20,6 +20,7 @@ import zipfile
 import signal
 import string
 import random
+import psutil
 
 def zh_ch(string):
     """
@@ -29,15 +30,13 @@ def zh_ch(string):
     """
     return string.encode("gbk").decode('UTF-8', errors='ignore')
 
-def Exit(exit_number,exit_queue=None):
+def Exit(exit_number,process_id_queue=None):
     """
     强制结束
     """
-    if exit_queue:
-        for i in range(exit_queue.qsize()):
-            process = exit_queue.get()
-            process.kill()
     time.sleep(1)
+    if process_id_queue:
+        clear_process_queue(process_id_queue)
     os._exit(exit_number)
 
 def getNumberofString(string):
@@ -485,15 +484,12 @@ def GetExitSignal(func,*args):
     while not killer.kill_now:
         time.sleep(1)
     Exit(-1)
-def ldk_release(ldkqueue,JadeLog=None,exit_queue=None):
+def ldk_release(ldkqueue,JadeLog=None,process_id_queue=None):
     if JadeLog:
         JadeLog.DEBUG("准备释放加密狗登录", True)
-    if exit_queue:
+    if process_id_queue:
         JadeLog.DEBUG("准备清除子进程",True)
-        if exit_queue:
-            for i in range(exit_queue.qsize()):
-                process = exit_queue.get()
-                process.kill()
+        clear_process_queue(process_id_queue)
     if ldkqueue.qsize() > 0:
         pyldk, handle = ldkqueue.get()
         pyldk.adapter.logout(handle)
@@ -507,6 +503,18 @@ def generate_random_string(length):
 def get_file_size(filename):
     size = os.path.getsize(filename)
     return size
+
+def clear_process_queue(process_id_queue):
+    for i in range(process_id_queue.qsize()):
+        clear_process(process_id_queue.get())
+
+
+def clear_process(process_id):
+    process = psutil.Process(process_id)
+    for proc in process.children(recursive=True):
+        proc.kill()
+    process.kill()
+
 
 if __name__ == '__main__':
     key = "HgEWN6tv_HeVqbh7M_Q-XT6NCVETFeIspgE17Xh30Co="
