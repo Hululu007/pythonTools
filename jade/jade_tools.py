@@ -20,7 +20,6 @@ import zipfile
 import signal
 import string
 import random
-import psutil
 
 def zh_ch(string):
     """
@@ -510,6 +509,7 @@ def clear_process_queue(process_id_queue):
 
 
 def clear_process(process_id):
+    import psutil
     process = psutil.Process(process_id)
     for proc in process.children(recursive=True):
         proc.kill()
