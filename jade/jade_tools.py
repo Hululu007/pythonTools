@@ -510,10 +510,13 @@ def clear_process_queue(process_id_queue):
 
 def clear_process(process_id):
     import psutil
-    process = psutil.Process(process_id)
-    for proc in process.children(recursive=True):
-        proc.kill()
-    process.kill()
+    try:
+        process = psutil.Process(process_id)
+        for proc in process.children(recursive=True):
+            proc.kill()
+        process.kill()
+    except:
+        pass
 
 
 if __name__ == '__main__':
