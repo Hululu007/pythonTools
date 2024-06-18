@@ -104,6 +104,10 @@ class JadeSqliteDataBase(object):
     def judgement_value_type(self,value):
         if type(value) == bool:
             return int(value)
+        elif type(value) == int:
+            return value
+        elif type(value) == str or value == None:
+            return "'{}'".format(value)
         else:
             return value
 
@@ -117,7 +121,7 @@ class JadeSqliteDataBase(object):
 
         sql_str = sql_str[:-1] + ") VALUES ("
         for data_key in data.keys():
-            sql_str = sql_str + "'{}'".format(self.judgement_value_type(data[data_key])) + ","
+            sql_str = sql_str + "{}".format(self.judgement_value_type(data[data_key])) + ","
         sql_str = sql_str[:-1] + ")"
         self.base_update(sql_str)
 
