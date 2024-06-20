@@ -1,12 +1,16 @@
 ### 更新日志
 
+#### JadeV2.3.1 - 2024-06-18
+* 优化获取版本信息的方法
+---
+
+<details onclose>
+<summary>查看更多更新日志</summary>
+
 #### JadeV2.3.0 - 2024-06-18
 * 优化数据库父类方法
 ---
 
-
-<details onclose>
-<summary>查看更多更新日志</summary>
 
 #### JadeV2.2.9 - 2024-06-13
 * 解决获取父进程异常的bug
