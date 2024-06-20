@@ -13,8 +13,7 @@ def write_version(package_name):
 def get_app_version():
     try:
         with open("CONTRIBUTING.md","rb") as f:
-            content = str(f.read(),encoding="utf-8").split("#### ")[1].split(" - ")[0]
-            version = ""
+            content = str(f.read(),encoding="utf-8").split(" - ")[0].split("#")[-1].strip()
             if "v" in content and "V" in content:
                 version = content.split("V")[-1]
             elif "v" in content:
