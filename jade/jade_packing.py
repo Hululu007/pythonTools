@@ -649,7 +649,7 @@ def build(args):
         if len(specify_files) > 0:
             if file_name in specify_files:
                 cmd_str = "{}easycython {}/{}".format(scripts_path, "new_src", file_name)
-                result = subprocess.run(cmd_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                result = subprocess.run(cmd_str, shell=True)
                 progressBar.update()
                 need_to_build_file_list.append(file_name)
             else:
@@ -657,7 +657,7 @@ def build(args):
         else:
             cmd_str = "{}easycython {}/{}".format(scripts_path, "new_src", file_name)
             need_to_build_file_list.append(file_name)
-            subprocess.run(cmd_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(cmd_str, shell=True)
             progressBar.update()
 
     build_file_list = os.listdir()
